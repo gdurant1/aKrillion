@@ -1,0 +1,601 @@
+/* ==========================================================
+   Wager Platformer - style.css
+   Color scheme: Tokyo Night
+   ========================================================== */
+
+:root {
+    /* Tokyo Night palette */
+    --bg-dark: #16161e;
+    --bg: #1a1b26;
+    --panel: #24283b;
+    --bg-highlight: #292e42;
+    --line: #414868;
+    --muted: #565f89;
+    --fg: #c0caf5;
+    --blue: #7aa2f7;
+    --cyan: #7dcfff;
+    --purple: #bb9af7;
+    --green: #9ece6a;
+    --orange: #ff9e64;
+    --red: #f7768e;
+    --yellow: #e0af68;
+    --skin: #e0af68;
+
+    /* Layout */
+    --floor-height: 96px;
+    --tile: 48px;
+    --player-x: 120px;
+    --font: "Courier New", Courier, ui-monospace, monospace;
+}
+
+/* Make the HTML hidden attribute always win */
+[hidden] {
+    display: none !important;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-dark);
+    color: var(--fg);
+    font-family: var(--font);
+}
+
+/* ---------- Game frame ---------- */
+
+#game {
+    position: relative;
+    width: min(960px, 100%);
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: linear-gradient(to bottom, var(--bg-dark) 0%, var(--bg) 55%, var(--panel) 100%);
+    border: 4px solid var(--line);
+    border-radius: 8px;
+}
+
+/* ---------- HUD: player (left) | level (center) | wager (right) ---------- */
+
+#hud {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 5;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    align-items: start;
+    padding: 12px 18px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+#hud-player,
+#hud-level,
+#hud-wager {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+#hud-player {
+    align-items: flex-start;
+}
+
+#hud-level {
+    align-items: center;
+    text-align: center;
+}
+
+#hud-wager {
+    align-items: flex-end;
+    text-align: right;
+}
+
+.hud-label {
+    font-size: 0.7rem;
+    color: var(--muted);
+}
+
+#player-initials {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--yellow);
+}
+
+#player-money {
+    font-size: 1.1rem;
+    color: var(--green);
+}
+
+#level-number {
+    font-size: 1.1rem;
+    color: var(--blue);
+}
+
+#wager-amount {
+    font-size: 1.1rem;
+    color: var(--orange);
+}
+
+/* ---------- Stage: sky, moon, stars ---------- */
+
+#stage {
+    position: absolute;
+    inset: 0;
+}
+
+/* Stars */
+#stage::before {
+    content: "";
+    position: absolute;
+    top: 80px;
+    left: 0;
+    width: 2px;
+    height: 2px;
+    background: transparent;
+    box-shadow:
+            90px 20px var(--fg),
+            210px 70px var(--cyan),
+            330px 10px var(--fg),
+            430px 90px var(--fg),
+            560px 40px var(--purple),
+            640px 110px var(--fg),
+            720px 30px var(--fg),
+            810px 80px var(--cyan),
+            880px 15px var(--fg),
+            150px 130px var(--fg),
+            500px 150px var(--fg),
+            770px 140px var(--purple);
+}
+
+/* Moon (unchanged) */
+#stage::after {
+    content: "";
+    position: absolute;
+    top: 70px;
+    right: 9%;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #c0caf5;
+    box-shadow: 0 0 40px rgba(122, 162, 247, 0.35);
+}
+
+/* ---------- Floor (cyberpunk plating) ---------- */
+/* Dark perforated metal plates, dim seams, blue edge light, circuit trace */
+
+#floor {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: var(--floor-height);
+    z-index: 2;
+    background-color: var(--bg);
+    background-image:
+            radial-gradient(circle, rgba(0, 0, 0, 0.55) 2px, transparent 2.5px),
+            linear-gradient(90deg, var(--panel) 3px, transparent 3px),
+            linear-gradient(var(--panel) 3px, transparent 3px);
+    background-size: 16px 16px, 96px 100%, 100% 48px;
+    background-position: 8px 8px, 0 0, 0 0;
+    box-shadow:
+            inset 0 4px 0 var(--blue),
+            0 -4px 14px rgba(122, 162, 247, 0.35);
+}
+
+/* Circuit trace running along the plating */
+#floor::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 22px;
+    height: 3px;
+    background: repeating-linear-gradient(
+            90deg,
+            var(--cyan) 0 40px,
+            transparent 40px 52px,
+            var(--cyan) 52px 60px,
+            transparent 60px 96px
+    );
+    opacity: 0.45;
+}
+
+/* ---------- Course squares (added by game.js) ---------- */
+
+#course {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: var(--floor-height);
+    height: var(--tile);
+    z-index: 3;
+    display: flex;
+}
+
+.square {
+    position: relative;
+    flex: 0 0 var(--tile);
+    width: var(--tile);
+    height: var(--tile);
+}
+
+.square.floor {
+    background: transparent;
+}
+
+/* Block: a "?" block the player jumps onto */
+.square.block {
+    background: var(--yellow);
+    border: 4px solid var(--orange);
+    box-shadow: inset 0 0 0 4px var(--panel);
+}
+
+.square.block::after {
+    content: "?";
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.4rem;
+    color: var(--bg-dark);
+}
+
+/* Pit: a gap in the floor */
+.square.pit {
+    background: var(--bg-dark);
+    box-shadow: 0 var(--floor-height) 0 var(--bg-dark);
+}
+
+/* ---------- Sprites (pixel art, 1 unit = 4px) ---------- */
+
+.sprite {
+    position: absolute;
+    bottom: var(--floor-height);
+    width: 32px;
+    height: 40px;
+    z-index: 4;
+}
+
+.sprite::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1px;
+    height: 1px;
+    background: transparent;
+    transform: scale(4);
+    transform-origin: 0 0;
+}
+
+/* Player: cap, face, shirt, boots */
+#player {
+    left: var(--player-x);
+}
+
+#player::before {
+    box-shadow:
+        /* cap */
+            2px 0 var(--red), 3px 0 var(--red), 4px 0 var(--red), 5px 0 var(--red),
+            1px 1px var(--red), 2px 1px var(--red), 3px 1px var(--red), 4px 1px var(--red), 5px 1px var(--red), 6px 1px var(--red),
+                /* face */
+            2px 2px var(--skin), 3px 2px var(--skin), 4px 2px var(--skin), 5px 2px var(--skin),
+            1px 3px var(--skin), 2px 3px var(--bg-dark), 3px 3px var(--skin), 4px 3px var(--skin), 5px 3px var(--bg-dark), 6px 3px var(--skin),
+            2px 4px var(--skin), 3px 4px var(--skin), 4px 4px var(--skin), 5px 4px var(--skin),
+                /* shirt and hands */
+            1px 5px var(--blue), 2px 5px var(--blue), 3px 5px var(--blue), 4px 5px var(--blue), 5px 5px var(--blue), 6px 5px var(--blue),
+            0 6px var(--skin), 1px 6px var(--blue), 2px 6px var(--blue), 3px 6px var(--blue), 4px 6px var(--blue), 5px 6px var(--blue), 6px 6px var(--blue), 7px 6px var(--skin),
+            1px 7px var(--blue), 2px 7px var(--blue), 3px 7px var(--blue), 4px 7px var(--blue), 5px 7px var(--blue), 6px 7px var(--blue),
+                /* legs */
+            1px 8px var(--blue), 2px 8px var(--blue), 5px 8px var(--blue), 6px 8px var(--blue),
+                /* boots */
+            1px 9px var(--line), 2px 9px var(--line), 5px 9px var(--line), 6px 9px var(--line);
+}
+
+/* LLM character: purple robot with teal eyes */
+#llm {
+    right: var(--player-x);
+}
+
+#llm::before {
+    box-shadow:
+        /* antenna */
+            3px 0 var(--cyan), 4px 0 var(--cyan),
+                /* head */
+            1px 1px var(--purple), 2px 1px var(--purple), 3px 1px var(--purple), 4px 1px var(--purple), 5px 1px var(--purple), 6px 1px var(--purple),
+            0 2px var(--purple), 1px 2px var(--purple), 2px 2px var(--purple), 3px 2px var(--purple), 4px 2px var(--purple), 5px 2px var(--purple), 6px 2px var(--purple), 7px 2px var(--purple),
+                /* eyes */
+            0 3px var(--purple), 1px 3px var(--bg-dark), 2px 3px var(--cyan), 3px 3px var(--bg-dark), 4px 3px var(--bg-dark), 5px 3px var(--cyan), 6px 3px var(--bg-dark), 7px 3px var(--purple),
+                /* mouth */
+            0 4px var(--purple), 1px 4px var(--bg-dark), 2px 4px var(--green), 3px 4px var(--green), 4px 4px var(--green), 5px 4px var(--green), 6px 4px var(--bg-dark), 7px 4px var(--purple),
+                /* body */
+            1px 5px var(--purple), 2px 5px var(--purple), 3px 5px var(--purple), 4px 5px var(--purple), 5px 5px var(--purple), 6px 5px var(--purple),
+            0 6px var(--purple), 1px 6px var(--purple), 2px 6px var(--purple), 3px 6px var(--yellow), 4px 6px var(--yellow), 5px 6px var(--purple), 6px 6px var(--purple), 7px 6px var(--purple),
+            1px 7px var(--purple), 2px 7px var(--purple), 3px 7px var(--purple), 4px 7px var(--purple), 5px 7px var(--purple), 6px 7px var(--purple),
+                /* legs and feet */
+            1px 8px var(--purple), 2px 8px var(--purple), 5px 8px var(--purple), 6px 8px var(--purple),
+            1px 9px var(--line), 2px 9px var(--line), 5px 9px var(--line), 6px 9px var(--line);
+}
+
+/* ---------- Sprite animation ---------- */
+
+@keyframes bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+}
+
+@keyframes jump {
+    0% { transform: translateY(0); }
+    40% { transform: translateY(-56px); }
+    100% { transform: translateY(0); }
+}
+
+#llm {
+    animation: bob 1.6s ease-in-out infinite;
+}
+
+#player.jump {
+    animation: jump 0.4s ease-out;
+}
+
+/* ---------- Dialog box (speech bubble) ---------- */
+
+#dialog {
+    position: absolute;
+    top: 22%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    width: min(520px, 90%);
+    padding: 16px 22px;
+    background: var(--panel);
+    color: var(--fg);
+    border: 3px solid var(--blue);
+    border-radius: 14px;
+    box-shadow: 0 6px 0 var(--bg-dark);
+}
+
+#dialog-speaker {
+    margin: 0 0 6px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--purple);
+}
+
+#dialog-text {
+    margin: 0 0 12px;
+    font-size: 1.05rem;
+    line-height: 1.4;
+}
+
+#dialog-text:empty {
+    margin: 0;
+}
+
+/* Tail pointing down toward the speaker: add .from-llm or .from-player to #dialog */
+#dialog-tail {
+    position: absolute;
+    bottom: -13px;
+    left: 18%;
+    width: 20px;
+    height: 20px;
+    background: var(--panel);
+    border-right: 3px solid var(--blue);
+    border-bottom: 3px solid var(--blue);
+    transform: rotate(45deg);
+}
+
+#dialog.from-llm #dialog-tail {
+    left: auto;
+    right: 18%;
+}
+
+#dialog.from-player #dialog-tail {
+    left: 18%;
+    right: auto;
+}
+
+/* ---------- Forms inside the dialog ---------- */
+
+#dialog form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+#dialog label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+}
+
+#odds-line {
+    flex-basis: 100%;
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    margin: 0;
+}
+
+#odds-value {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--cyan);
+}
+
+input {
+    width: 110px;
+    padding: 8px 10px;
+    font: inherit;
+    color: var(--fg);
+    background: var(--bg-dark);
+    border: 2px solid var(--line);
+    border-radius: 6px;
+}
+
+#initials-input {
+    width: 80px;
+    text-transform: uppercase;
+    text-align: center;
+    letter-spacing: 0.2em;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--cyan);
+}
+
+/* ---------- Buttons ---------- */
+
+button {
+    padding: 8px 16px;
+    font: inherit;
+    font-weight: bold;
+    color: var(--bg-dark);
+    background: var(--blue);
+    border: 0;
+    border-bottom: 4px solid var(--line);
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+button:hover {
+    filter: brightness(1.12);
+}
+
+button:active {
+    transform: translateY(2px);
+    border-bottom-width: 2px;
+}
+
+button:focus-visible {
+    outline: 2px solid var(--cyan);
+    outline-offset: 2px;
+}
+
+#wager-button,
+#continue-button,
+#start-button {
+    background: var(--green);
+}
+
+#all-in-button {
+    background: var(--orange);
+}
+
+#exit-button {
+    background: var(--red);
+}
+
+#dialog-next {
+    background: var(--cyan);
+}
+
+/* ---------- Results (exit or game over) ---------- */
+
+#results {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 20px;
+    text-align: center;
+    background: rgba(22, 22, 30, 0.94);
+}
+
+#results-title {
+    margin: 0;
+    font-size: 1.8rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--yellow);
+}
+
+#results-score {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--green);
+}
+
+#scores-list {
+    width: min(280px, 100%);
+    margin: 6px 0;
+    padding: 0 0 0 28px;
+    text-align: left;
+    color: var(--fg);
+}
+
+#scores-list li {
+    padding: 2px 0;
+}
+
+#scores-list li::marker {
+    color: var(--muted);
+}
+
+#bridges-link-line {
+    margin: 0;
+}
+
+#bridges-link {
+    color: var(--cyan);
+}
+
+#bridges-link:hover {
+    color: var(--purple);
+}
+
+/* ---------- Small screens ---------- */
+
+@media (max-width: 640px) {
+    :root {
+        --player-x: 40px;
+    }
+
+    #hud {
+        padding: 8px 10px;
+    }
+
+    #player-initials,
+    #player-money,
+    #level-number,
+    #wager-amount {
+        font-size: 0.9rem;
+    }
+
+    #dialog {
+        top: 18%;
+        padding: 12px 14px;
+    }
+
+    #dialog-text {
+        font-size: 0.9rem;
+    }
+}
+
+/* ---------- Reduced motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+    #llm,
+    #player.jump {
+        animation: none;
+    }
+}

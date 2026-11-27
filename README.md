@@ -61,15 +61,16 @@ profit = payout - wager
 - **Recursion:** a square's probability is defined in terms of earlier squares (for example, a pit is less likely right after a pit).
 - **Dynamic programming:** results of those recursive calculations are cached so each square is computed only once, and the survival probability of a stretch is built from them.
 - **LLM call:** the backend sends the game state and computed probabilities to the LLM and returns the character's dialogue.
-- **BRIDGES:** visualizes the data structures and algorithm results behind the recursion and DP.
+- **BRIDGES:** visualizes the data structures and algorithm results behind the recursion and DP, once the game ends.
 
 ### Data Flow
-1. `game.js` sends user input and game state to the C++ server through `api.js`.
-2. `main.cpp` passes the state to `probability.cpp` and gets the survival odds back, which are shown before the wager. `probability.cpp` also sends its data structures and results to `bridges_view.cpp` for visualization with BRIDGES.
+1. `game.js` sends user input and game state to the C++ server using `fetch` calls.
+2. `main.cpp` passes the state to `probability.cpp` and gets the survival odds back, which are shown before the wager. `probability.cpp` and `game_state` also keep the DP table, recursion results, and a history of survival probability and money in memory for the whole game.
 3. After the wager, the server rolls all 10 squares of the stretch and stores them. Only one square at a time is sent to the browser, so players cannot read the pits ahead of time.
 4. `main.cpp` updates money, position, and checkpoint through `game_state.cpp`.
-5. On key moments, `main.cpp` passes the state and probabilities to `llm_client.cpp`.
+5. On key moments, `main.cpp` passes the state and probabilities to `llm_client.h`.
 6. The server returns the result and dialogue to the browser, which displays them.
+7. When the player exits or the game is over, `main.cpp` passes the saved data to `bridges_view.h` for visualization, and saves the score.
 
 The browser talks to one server only. Probability and LLM are modules inside that server, not separate programs. Money, wager, and square outcomes live on the server so players cannot edit them in the browser.
 
@@ -81,19 +82,16 @@ wager-platformer/
 ├── frontend/
 │   ├── index.html        # page structure, canvas, speech bubble
 │   ├── style.css         # layout and styling
-│   ├── game.js           # game loop, movement, drawing, keyboard input
-│   └── api.js            # fetch calls to the C++ server
+│   └── game.js           # fetch calls to the server, game loop, movement, drawing, keyboard input
 └── backend/
     ├── CMakeLists.txt    # build file (or Makefile)
     ├── main.cpp          # HTTP server and routes
     ├── probability.h     # probability calculator interface
     ├── probability.cpp   # recursion + dynamic programming
-    ├── bridges_view.h    # BRIDGES visualization interface
-    ├── bridges_view.cpp  # visualizes data structures and algorithm results with BRIDGES
+    ├── bridges_view.h    # BRIDGES visualization (header-only, inline functions)
     ├── game_state.h      # money, wager, position, checkpoint
     ├── game_state.cpp    # state updates, payout, game-over check
-    ├── llm_client.h      # LLM client interface
-    ├── llm_client.cpp    # prompt building and LLM API call
+    ├── llm_client.h      # prompt building and LLM API call (header-only, inline functions)
     └── config.h          # API key loading, model name, port, house edge
 ```
 
@@ -103,9 +101,9 @@ wager-platformer/
 |-------|---------|
 | `/start` | Begin a game with $100 and return the first odds |
 | `/wager` | Submit a wager; the server rolls the 10-square stretch |
-| `/step` | Move forward or jump; returns the square outcome and new state |
+| `/step` | Move forward or jump; returns the square outcome and new state. On game over, also triggers BRIDGES |
 | `/dialogue` | Get LLM character dialogue |
-| `/exit` | Exit at a checkpoint and finalize the score |
+| `/exit` | Exit at a checkpoint, save the score, and trigger BRIDGES |
 | `/scores` | Get the high score list |
 
 ### LLM Triggers
@@ -121,7 +119,16 @@ Design notes: call the LLM asynchronously so the game never freezes, keep canned
 ### Implementation Notes
 - Store money as whole cents (integers) and round payouts to a cent so totals never drift.
 - Set a minimum survival probability (for example, 0.01) so a very unlikely stretch cannot produce a huge payout.
-- Store the high score list in a small file such as `scores.json`.
+- The header-only files (`llm_client.h`, `bridges_view.h`) mark their functions `inline` so including them from more than one file does not cause duplicate-definition errors.
+- Include the BRIDGES header only where it is needed, because it is large and slows compilation of every file that includes it.
+
+### High Scores
+- Scores are saved on the server, not in the browser, so players cannot edit them and everyone shares one list.
+- Use a small file such as `scores.txt`, with one line per score: initials and money in cents (for example `AAA 125050`). Sort on read to build the top list.
+- The score is saved when the player exits at a checkpoint. A game over (money at $0) is not saved, so the list does not fill with zeros.
+- Validate initials on the server: letters only, 3 characters maximum, no spaces.
+- Protect writes with a `std::mutex` so two players finishing at once do not corrupt the file.
+- Add `scores.txt` to `.gitignore` so the team does not commit it.
 
 ## BRIDGES Visualization
 
@@ -136,13 +143,20 @@ The BRIDGES page lists arrays (including 2D), trees, and line charts, which map 
 | Recursion behind a square's probability | Binary tree |
 | Survival probability and the player's money over time | Line chart |
 
+### When it runs
+- BRIDGES is called **only when the player exits or the game is over** (money reaches $0). Wagers, steps, deaths that leave the player with money, and checkpoints never touch BRIDGES, so it adds no delay during play.
+- During the game, `probability.cpp` and `game_state` keep the DP table, recursion results, and a history of `(stretch number, survival probability, money)` in memory. This data is reset on `/start`.
+- `main.cpp` calls `bridges_view.h` from two places: the `/exit` handler and the game-over branch of `/step`.
+- The upload runs on a separate thread (or after the response is sent) so the final screen and high score list appear immediately.
+- If the upload fails (no internet, bad key), the error is caught and the visualization is skipped. The game never fails because of BRIDGES.
+- The BRIDGES link is returned in the `/exit` or game-over response so the player or grader can open it.
+
 ### Where it fits
-- The visualization is called from the C++ backend, in or alongside `probability.cpp`, so it sees the same recursion and DP results that produce the odds.
-- Planned module: `bridges_view.h` and `bridges_view.cpp` in `backend/`, so the visualization code stays out of the probability logic.
-- The game's design, routes, and data flow do not change.
+- Module: `bridges_view.h` in `backend/` (header-only), so the visualization code stays out of the probability logic.
+- The game's design, routes, and data flow otherwise do not change.
 
 ### Requirements to confirm
-BRIDGES needs an account, an API key, and an internet connection from the machine that runs the C++ code. Check the BRIDGES documentation for the exact setup steps before building this.
+BRIDGES needs an account, an API key, and an internet connection from the machine that runs the C++ code. Check the BRIDGES documentation for the exact setup steps before building this. Also confirm with the instructor that visualizing at the end of the game meets the assignment requirements.
 
 ## Team Split
 
@@ -153,28 +167,29 @@ The work is split among three team members: two parts for the backend and a thir
 
 - Calculate the probability of a floor, block, or pit, and the survival probability of a 10-square stretch, using recursion and dynamic programming.
 - Track the game state: money, wager, position, checkpoint, payout, and the game-over check.
+- Keep the DP table, recursion results, and probability/money history in memory for the whole game, for BRIDGES.
 - Provides the game state and the computed probabilities that Part 2 uses for dialogue.
 
 ### Part 2: LLM Client
-**Files:** `llm_client.h`, `llm_client.cpp`
+**Files:** `llm_client.h`
 
 - Build the prompt from the game state and probabilities, call the LLM API, and return the character's dialogue text.
 - Call the LLM asynchronously, keep canned fallback lines, keep a short conversation history, and limit calls per player (see LLM Triggers above).
 - Depends on the undecided LLM choice and character personality.
 
 ### Part 3: Frontend
-**Files:** `index.html`, `style.css`, `game.js`, `api.js`
+**Files:** `index.html`, `style.css`, `game.js`
 
 - Draw the game and handle the game loop, character movement, and keyboard input.
 - Show the speech bubble for the LLM character, and take the player's wager and initials.
-- Talk to the C++ server through `api.js`.
+- Talk to the C++ server with `fetch` calls in `game.js`.
 - Completed by the third team member.
 
 ### Not Yet Assigned
 
 **`main.cpp`**
 - Starts the HTTP server and defines the routes: `/start`, `/wager`, `/step`, `/dialogue`, `/exit`, and `/scores`.
-- Connects the parts: passes the state to `probability.cpp`, updates money and position through `game_state.cpp`, calls `llm_client.cpp` on key moments, and calls `bridges_view.cpp` to send the visualization data.
+- Connects the parts: passes the state to `probability.cpp`, updates money and position through `game_state.cpp`, calls `llm_client.h` on key moments, saves scores, and calls `bridges_view.h` when the player exits or the game is over.
 - It touches all three parts of the team split, so whoever owns it needs to coordinate closely with the other two backend members and the frontend member.
 
 **`config.h`**
@@ -183,8 +198,8 @@ The work is split among three team members: two parts for the backend and a thir
 **`CMakeLists.txt`**
 - The build file (or a Makefile) that compiles the backend.
 
-**`bridges_view.h` and `bridges_view.cpp`**
-- The BRIDGES visualization module. It receives the data structures and results from `probability.cpp`, such as the DP table, the recursion tree, and the survival probability and money over time, and sends them to BRIDGES.
+**`bridges_view.h`**
+- The BRIDGES visualization module (header-only). It receives the saved data structures and results from `probability.cpp` and `game_state`, such as the DP table, the recursion tree, and the survival probability and money over time, and sends them to BRIDGES when the game ends.
 
 ### Where It Runs
 The game will run on a GitHub Codespace or on a local server.

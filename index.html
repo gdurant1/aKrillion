@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Wager Platformer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<main id="game">
+
+    <!-- HUD: initials + money (left), level (center), wager (right) -->
+    <header id="hud">
+        <section id="hud-player">
+            <span id="player-initials">---</span>
+            <span id="player-money">$100.00</span>
+        </section>
+
+        <section id="hud-level">
+            <span class="hud-label">LEVEL</span>
+            <span id="level-number">1</span>
+        </section>
+
+        <section id="hud-wager">
+            <span class="hud-label">WAGER</span>
+            <span id="wager-amount">$0.00</span>
+        </section>
+    </header>
+
+    <!-- Game area: sprites, course squares, floor -->
+    <section id="stage">
+        <div id="llm" class="sprite" aria-label="LLM character"></div>
+        <div id="player" class="sprite" aria-label="Player"></div>
+
+        <div id="course"></div>
+        <div id="floor"></div>
+    </section>
+
+    <!-- Dialog box (speech bubble) shared by wager, continue/exit, and start prompts -->
+    <section id="dialog" hidden>
+        <p id="dialog-speaker"></p>
+        <p id="dialog-text"></p>
+
+        <!-- Initials (shown at the start of the game) -->
+        <form id="initials-form" hidden>
+            <label for="initials-input">Initials</label>
+            <input id="initials-input" type="text" maxlength="3" pattern="[A-Za-z]{1,3}" autocomplete="off" required>
+            <button type="submit" id="start-button">Start</button>
+        </form>
+
+        <!-- Wager (shown at the start and at every checkpoint) -->
+        <form id="wager-form" hidden>
+            <p id="odds-line">
+                <span class="hud-label">ODDS</span>
+                <span id="odds-value">--%</span>
+            </p>
+            <label for="wager-input">Wager</label>
+            <input id="wager-input" type="number" min="1" step="1" inputmode="numeric" required>
+            <button type="submit" id="wager-button">Wager</button>
+            <button type="button" id="all-in-button">All in</button>
+        </form>
+
+        <!-- Continue or exit (shown at a checkpoint) -->
+        <form id="choice-form" hidden>
+            <button type="button" id="continue-button">Continue</button>
+            <button type="button" id="exit-button">Exit</button>
+        </form>
+
+        <!-- Advance the dialog (for plain LLM lines) -->
+        <button type="button" id="dialog-next" hidden>Next</button>
+
+        <span id="dialog-tail"></span>
+    </section>
+
+    <!-- Game over / exit results -->
+    <section id="results" hidden>
+        <h2 id="results-title"></h2>
+        <p id="results-score"></p>
+        <ol id="scores-list"></ol>
+        <p id="bridges-link-line" hidden>
+            <a id="bridges-link" href="#" target="_blank" rel="noopener">View BRIDGES visualization</a>
+        </p>
+        <button type="button" id="restart-button">Play again</button>
+    </section>
+
+</main>
+
+<script src="game.js"></script>
+</body>
+</html>
